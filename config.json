@@ -1,0 +1,42 @@
+{
+  "workflowApiVersion": "1.1",
+  "metaData": {
+    "icon": "https://yourdomain.com/icon.png",
+    "category": "message"
+  },
+  "type": "REST",
+  "lang": {
+    "en-US": {
+      "name": "WhatsApp Message",
+      "description": "Envie mensagens WhatsApp usando templates dinâmicos."
+    }
+  },
+  "arguments": {
+    "execute": {
+      "in": [
+        {
+          "key": "numero_disparador",
+          "type": "text",
+          "label": "Número Disparador",
+          "required": true,
+          "description": "Selecione o número remetente do WhatsApp."
+        },
+        {
+          "key": "template",
+          "type": "select",
+          "label": "Template de Mensagem",
+          "required": true,
+          "description": "Selecione o template disponível para o número escolhido.",
+          "options": []
+        },
+        {
+          "key": "template_vars",
+          "type": "group",
+          "label": "Variáveis do Template",
+          "description": "Preencha os campos das variáveis do template. Os campos são gerados dinamicamente.",
+          "fields": []
+        }
+      ]
+    }
+  }
+}
