@@ -58,8 +58,30 @@ app.use(express.json());
 
 // Endpoint: Execute
 app.post('/execute', (req, res) => {
-	// Aqui vai a lógica para enviar mensagem via WhatsApp
-	res.json({ message: 'Execute endpoint chamado!' });
+	// Recebe o payload da Custom Activity
+	const {
+		numero_disparador,
+		template_id,
+		variaveis,
+		telefone_contato
+	} = req.body;
+
+	// Monta o body para a API Cogn2 (ajustar conforme especificação)
+	const cogn2Payload = {
+		numero: numero_disparador,
+		template: template_id,
+		params: variaveis,
+		contato: telefone_contato
+	};
+
+	// Exemplo de chamada HTTP (substituir URL e método conforme Cogn2)
+	// const axios = require('axios');
+	// axios.post('https://api.cogn2.com/send', cogn2Payload)
+	//   .then(response => res.json(response.data))
+	//   .catch(error => res.status(500).json({ error: error.message }));
+
+	// Por enquanto, apenas retorna o payload montado
+	res.json({ enviado_para_cogn2: cogn2Payload });
 });
 
 // Endpoint: Save
