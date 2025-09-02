@@ -5,83 +5,51 @@ app.use(express.static(path.join(__dirname, 'frontend', 'build')));
 app.get('/', (req, res) => {
 	res.sendFile(path.join(__dirname, 'frontend', 'build', 'index.html'));
 });
-// Simulação de dados (substitua por integração Cogn2 depois)
-const numeros = [
-	{ id: 'num1', numero: '+5511999999999', nome: 'WhatsApp 1' },
-	{ id: 'num2', numero: '+5511888888888', nome: 'WhatsApp 2' }
-];
-
-const templates = {
-	num1: [
-		{ id: 'tpl1', nome: 'Boas-vindas', texto: 'Olá {{nome}}, seja bem-vindo!' },
-		{ id: 'tpl2', nome: 'Confirmação', texto: 'Sua reserva está confirmada para {{data}}.' }
-	],
-	num2: [
-		{ id: 'tpl3', nome: 'Promoção', texto: 'Aproveite a oferta: {{oferta}}.' }
-	]
-};
-
-// Endpoint para buscar números
-app.get('/numeros', (req, res) => {
-	res.json(numeros);
-});
-
-// Endpoint para buscar templates por número
-app.get('/templates', (req, res) => {
-	const numeroId = req.query.numero;
-	res.json(templates[numeroId] || []);
-});
-
-// Endpoint para buscar detalhes do template
-app.get('/template/:id', (req, res) => {
-	const { id } = req.params;
-	let found = null;
-	Object.values(templates).forEach(arr => {
-		arr.forEach(tpl => {
-			if (tpl.id === id) found = tpl;
-		});
-	});
-	if (!found) return res.status(404).json({ error: 'Template não encontrado' });
-	// Extrai variáveis do texto
-	const vars = [];
-	const regex = /{{(.*?)}}/g;
-	let match;
-	while ((match = regex.exec(found.texto)) !== null) {
-		vars.push(match[1]);
-	}
-	res.json({ ...found, variaveis: vars });
-});
 // Exemplo básico Node.js
 const express = require('express');
 const app = express();
 app.use(express.json());
 
 // Endpoint: Execute
-app.post('/execute', (req, res) => {
-	// Recebe o payload da Custom Activity
-	const {
-		numero_disparador,
-		template_id,
-		variaveis,
-		telefone_contato
-	} = req.body;
+const axios = require('axios');
+app.post('/execute', async (req, res) => {
+	try {
+		// Recebe o payload da Custom Activity
+		const {
+			phone_number_id,    // ID do número disparador
+			to_number,          // Telefone destino
+			template_name,      // Nome do template
+			display_name,       // Nome do cliente
+			args,               // Parâmetros adicionais (opcional)
+			parameters          // Parâmetros do template (variáveis)
+		} = req.body;
 
-	// Monta o body para a API Cogn2 (ajustar conforme especificação)
-	const cogn2Payload = {
-		numero: numero_disparador,
-		template: template_id,
-		params: variaveis,
-		contato: telefone_contato
-	};
+		// Monta o payload conforme esperado pela Cogn2
+		const cogn2Payload = {
+			phone_number_id,
+			to_number,
+			template_name,
+			display_name,
+			args: args || {},
+			parameters: parameters || {}
+		};
 
-	// Exemplo de chamada HTTP (substituir URL e método conforme Cogn2)
-	// const axios = require('axios');
-	// axios.post('https://api.cogn2.com/send', cogn2Payload)
-	//   .then(response => res.json(response.data))
-	//   .catch(error => res.status(500).json({ error: error.message }));
+		// Chamada para a API Cogn2
+		const response = await axios.post(
+			'https://app2.hmg.cogni2.com/api/whatsapp/send-custom-message/',
+			cogn2Payload,
+			{ headers: { 'Content-Type': 'application/json' } }
+		);
 
-	// Por enquanto, apenas retorna o payload montado
-	res.json({ enviado_para_cogn2: cogn2Payload });
+		// Retorna o resultado da Cogn2
+		res.status(response.status).json(response.data);
+	} catch (error) {
+		// Retorna erro detalhado
+		res.status(error.response?.status || 500).json({
+			error: error.message,
+			details: error.response?.data || null
+		});
+	}
 });
 
 // Endpoint: Save
