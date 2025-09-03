@@ -1,4 +1,78 @@
 require("dotenv").config();
+const express = require("express");
+const app = express();
+const axios = require("axios");
+const path = require("path");
+
+// ================= MOCK PARA TESTES LOCAIS =================
+// Remova ou comente estes endpoints para produção!
+const mockNumeros = [
+  { id: "num1", nome: "WhatsApp 1", numero: "+5511999999999" },
+  { id: "num2", nome: "WhatsApp 2", numero: "+5511888888888" },
+];
+
+const mockTemplates = {
+  num1: [
+    {
+      id: "tpl1",
+      nome: "Boas-vindas",
+      texto: "Olá {{nome}}, seja bem-vindo a nossa companhia {{empresa}}!",
+    },
+    {
+      id: "tpl2",
+      nome: "Confirmação",
+      texto: "Sua reserva está confirmada para {{data}}.",
+    },
+    {
+      id: "tpl3",
+      nome: "Débitos",
+      texto: "Você possui um débito de {{valor}} com vencimento em {{vencimento}}. Favor regularizar.",
+    },
+  ],
+  num2: [
+    { id: "tpl4", nome: "Promoção", texto: "Aproveite a oferta: {{oferta}}." },
+  ],
+};
+
+// Endpoint mock para buscar números
+app.get("/numeros", (req, res) => {
+  res.json(mockNumeros);
+});
+
+// Endpoint mock para buscar templates por número
+app.get("/templates", (req, res) => {
+  const numeroId = req.query.numero;
+  res.json(mockTemplates[numeroId] || []);
+});
+
+// Endpoint mock para buscar detalhes do template
+app.get("/template/:id", (req, res) => {
+  const { id } = req.params;
+  let found = null;
+  Object.values(mockTemplates).forEach((arr) => {
+    arr.forEach((tpl) => {
+      if (tpl.id === id) found = tpl;
+    });
+  });
+  if (!found) return res.status(404).json({ error: "Template não encontrado" });
+  // Extrai variáveis do texto
+  const vars = [];
+  const regex = /{{(.*?)}}/g;
+  let match;
+  while ((match = regex.exec(found.texto)) !== null) {
+    vars.push(match[1]);
+  }
+  res.json({ ...found, variaveis: vars });
+});
+// ================= FIM MOCK =================
+
+app.use(express.json());
+// Servir frontend build como estático
+app.use(express.static(path.join(__dirname, "frontend", "build")));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "frontend", "build", "index.html"));
+});
 
 // Endpoint para buscar números vinculados à conta business na Meta
 app.get("/numeros-meta", async (req, res) => {
@@ -45,20 +119,8 @@ app.get("/templates-meta/:phone_number_id", async (req, res) => {
     });
   }
 });
-const path = require("path");
-// Servir frontend build como estático
-app.use(express.static(path.join(__dirname, "frontend", "build")));
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "build", "index.html"));
-});
-// Exemplo básico Node.js
-const express = require("express");
-const app = express();
-app.use(express.json());
 
 // Endpoint: Execute
-const axios = require("axios");
 app.post("/execute", async (req, res) => {
   try {
     // Recebe o payload da Custom Activity
